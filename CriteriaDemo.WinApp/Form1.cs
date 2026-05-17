@@ -27,28 +27,22 @@ namespace CriteriaDemo.WinApp
 
 		private string GetStartDateFilter()
 		{
-			if(string.IsNullOrEmpty(s_StartTime.Text)) return string.Empty;
-
-			bool isValid = DateTime.TryParse(s_StartTime.Text, out var startTime);
-			if (isValid)
-			{
-				return startTime.ToString("yyyy/MM/dd");
-			}
-			else
-			{
-				return string.Empty;
-			}
+			return GetDateFilter(s_StartTime.Text);
 		}
 
 		private string GetEndDateFilter()
 		{
-			if (string.IsNullOrEmpty(s_EndTime.Text)) return string.Empty;
+			return GetDateFilter(s_EndTime.Text);
+		}
 
-			bool isValid = DateTime.TryParse(s_EndTime.Text, out var endTime);
+		private string GetDateFilter(string dateText)
+		{
+			if (string.IsNullOrEmpty(dateText)) return string.Empty;
 
+			bool isValid = DateTime.TryParse(dateText, out var date);
 			if (isValid)
 			{
-				return endTime.ToString("yyyy/MM/dd");
+				return date.ToString("yyyy/MM/dd");
 			}
 			else
 			{
@@ -68,6 +62,21 @@ FROM Orders o
 INNER JOIN Members m ON o.MemberId = m.Id";
 
 			// Build the WHERE clause based on user input
+			string where = GenerateCriteria();
+
+			// 若有任一篩選條件，則將其加入 WHERE 子句
+			if (string.IsNullOrEmpty(where) == false)
+			{
+				sql += "\r\nWHERE " + where.Substring(5);
+			}
+
+			sql += "\r\nORDER BY o.OrderTime DESC";
+
+			txtSQL.Text = sql;
+		}
+
+		private string GenerateCriteria()
+		{
 			var where = string.Empty;
 
 			var s_status = GetStatusFilter();
@@ -89,16 +98,7 @@ INNER JOIN Members m ON o.MemberId = m.Id";
 				where += $" AND o.OrderTime < '{dtEnd}'";
 			}
 
-			// 若有任一篩選條件，則將其加入 WHERE 子句
-			if (string.IsNullOrEmpty(where) == false) { 
-				sql += "\r\nWHERE " + where.Substring(5);
-			}
-
-			sql += "\r\nORDER BY o.OrderTime DESC";
-
-			txtSQL.Text = sql;
+			return where;
 		}
-
-
 	}
 }
